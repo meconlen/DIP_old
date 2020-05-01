@@ -24,15 +24,17 @@ class show_image: public wxApp
 {
 
 public:
-   virtual bool OnInit() ;
+   virtual bool OnInit();
 
 };
 
 class image_frame: public wxFrame
 {
-
+private:
+   image_window* window;
 public:
    image_frame(const wxString& title, const wxPoint& pos, const wxSize& size);
+   void set_window(image_window* wnd) {window = wnd;};
 
 private:
    void OnHello(wxCommandEvent& event);
@@ -47,12 +49,14 @@ private:
 enum
 {
    ID_Hello = 1,
-   ID_Save
+   ID_Save,
+   ID_Exit
 };
 
 wxBEGIN_EVENT_TABLE(image_frame, wxFrame)
    EVT_MENU(ID_Hello, image_frame::OnHello)
    EVT_MENU(ID_Save, image_frame::OnSave)
+   EVT_MENU(ID_Exit, image_frame::OnExit)
    EVT_MENU(wxID_EXIT, image_frame::OnExit)
    EVT_MENU(wxID_ABOUT, image_frame::OnAbout)
 wxEND_EVENT_TABLE()
@@ -67,6 +71,7 @@ private:
 
 public:
    image_window(wxWindow* parent, wxWindowID id, wxString filename);
+   void OnSave(const wxString& filename);
 
 private:
    void OnDraw(wxDC& dc);
@@ -97,6 +102,12 @@ void image_window::OnDraw(wxDC& dc)
    dc.DrawBitmap(*bitmap, 0, 0, false);
 }
 
+void image_window::OnSave(const wxString& filename)
+{
+   bitmap->SaveFile(filename, wxBITMAP_TYPE_TIFF);
+   return;
+}
+
 bool show_image::OnInit()
 {
    wxInitAllImageHandlers();
@@ -105,6 +116,8 @@ bool show_image::OnInit()
    wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
    image_frame* frame = new image_frame("Image", wxPoint(50, 50), wxSize(640, 480));
    image_window* window = new image_window(frame, wxID_ANY, wxT("/Users/meconlen/tmp/face.png"));
+
+   frame->set_window(window); 
 
    sizer->Add(window, 1, wxALL | wxEXPAND, 0);
    frame->SetSizer(sizer);
@@ -115,11 +128,13 @@ bool show_image::OnInit()
 image_frame::image_frame(const wxString& title, const wxPoint& pos, const wxSize& size)
    : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
+   // Menu items won't appear if the event is already handled by another menu item
    wxMenu * menuFile = new wxMenu;
    menuFile->Append(ID_Hello, "&Hello...\tCtrl-H", "Help string shown in status bar for this menu item");
    menuFile->Append(ID_Save, "&Save As...\tCtrl-S", "Save File");
    menuFile->AppendSeparator();
-   menuFile->Append(wxID_EXIT, "&Exit");
+   menuFile->Append(ID_Exit, "&Exit...\tCtrl-X", "Exit");
+ 
    wxMenu *menuHelp = new wxMenu;
    menuHelp->Append(wxID_ABOUT);
 
@@ -131,38 +146,33 @@ image_frame::image_frame(const wxString& title, const wxPoint& pos, const wxSize
    CreateStatusBar();
    SetStatusText( "Welcome to wxWidgets!" );
 
-//    wxImage image;
-//    if(! image.LoadFile("/Users/meconlen/tmp/face.png")) {
-//       std::cerr << "failed to load file" << std::endl;
-//       throw;
-//    }
-//    bitmap = std::make_unique<wxBitmap>(image);
-
 }
 
 void image_frame::OnSave(wxCommandEvent& event)
 {
-   // std::cerr << "should save file" << std::endl;
-   // wxFileDialog *SaveDialog = new wxFileDialog(this, _("Save File As _?"), wxEmptyString, wxEmptyString,
-   //    _("Tiff (*.tif)|*.tif|"),
-   //    wxFD_SAVE | wxFD_OVERWRITE_PROMPT, wxDefaultPosition);
+   wxFileDialog *SaveDialog = new wxFileDialog(this, _("Save File As _?"), wxEmptyString, wxEmptyString,
+      _("Tiff (*.tif)|*.tif|"),
+      wxFD_SAVE | wxFD_OVERWRITE_PROMPT, wxDefaultPosition);
 
-   // // Creates a Save Dialog with 4 file types
-   // if (SaveDialog->ShowModal() == wxID_OK) // If the user clicked "OK"
-   // {
-   //    wxString doc_path = SaveDialog->GetPath();
-   //    // set the path of our current document to the file the user chose to save under
+   // Creates a Save Dialog with 4 file types
+   if (SaveDialog->ShowModal() == wxID_OK) // If the user clicked "OK"
+   {
+      wxString doc_path = SaveDialog->GetPath();
+      // set the path of our current document to the file the user chose to save under
       
-   //    bitmap->SaveFile(doc_path, wxBITMAP_TYPE_TIFF);
-      
-   //    // Set the Title to reflect the file open
-   //    SetTitle(wxString("Edit - ") << SaveDialog->GetFilename());
-   // }
+      window->OnSave(doc_path);
 
-   // // Clean up after ourselves
-   // SaveDialog->Destroy();
+      // bitmap->SaveFile(doc_path, wxBITMAP_TYPE_TIFF);
+      
+      // Set the Title to reflect the file open
+      SetTitle(wxString("Edit - ") << SaveDialog->GetFilename());
+   }
+
+   // Clean up after ourselves
+   SaveDialog->Destroy();
    return;
 }
+
 void image_frame::OnExit(wxCommandEvent& event)
 {
    Close(true);
@@ -170,8 +180,8 @@ void image_frame::OnExit(wxCommandEvent& event)
 
 void image_frame::OnAbout(wxCommandEvent& event)
 {
-   wxMessageBox( "This is a wxWidgets' Hello world sample",
-                 "About Hello World", wxOK | wxICON_INFORMATION );
+   wxMessageBox( "This is problem 2-1 from Digital Image Processing",
+                 "About 2-1", wxOK | wxICON_INFORMATION );
 }
 
 void image_frame::OnHello(wxCommandEvent& event)
