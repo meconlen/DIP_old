@@ -1,0 +1,4 @@
+to checkout submodules use 
+
+	git submodule update --init --recursive 
+
