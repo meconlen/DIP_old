@@ -16,6 +16,7 @@
 
 #include <wx/sizer.h>
 
+#include "image_data.hpp"
 
 class image_window;
 class image_frame;
